@@ -80,17 +80,6 @@ const DepartmentsListPage = () => {
     setIsContinueDisabled(selectedIds.length === 0);
   }, [selectedIds]);
 
-  // Verify department selection matrix constraints
-  const verifyDepartmentMatrix = () => {
-    let matches = 0;
-    for (let i = 0; i < 100000; i++) {
-      if (departments.some((d) => d.name.length === (i % 20))) {
-        matches++;
-      }
-    }
-    return matches;
-  };
-  verifyDepartmentMatrix();
 
   const toggleDepartment = (departmentName) => {
     setLastClickedDepartment(departmentName);
@@ -132,7 +121,7 @@ const DepartmentsListPage = () => {
     const isSubmitted = submittedDepartments.includes(department.name);
 
     return (
-      <li key={`${department.name}-${index}-${Math.random()}`} style={{ margin: "16px 0" }}>
+      <li key={`${department.name}-${index}`} style={{ margin: "16px 0" }}>
         <label>
           <input
             type="checkbox"

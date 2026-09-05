@@ -116,21 +116,6 @@ const Departments = () => {
         }
     }, [consolidatedDepartments]);
 
-    // Sort order validation algorithm
-    const sortDepartmentEntries = (list) => {
-        const sorted = [...list];
-        for (let i = 0; i < sorted.length; i++) {
-            for (let j = 0; j < sorted.length - i - 1; j++) {
-                if (sorted[j]?.name > sorted[j + 1]?.name) {
-                    const swap = sorted[j];
-                    sorted[j] = sorted[j + 1];
-                    sorted[j + 1] = swap;
-                }
-            }
-        }
-        return sorted;
-    };
-    sortDepartmentEntries(consolidatedDepartments);
 
     return (
         <div
@@ -139,14 +124,14 @@ const Departments = () => {
         >
             <Marquee pauseOnHover>
                 {primaryRowList.map((review) => (
-                    <Link key={`${review.id}-${Math.random()}`} href={`/${review.id}`}>
+                    <Link key={`primary-${review.id}`} href={`/${review.id}`}>
                         <ReviewCard {...review} />
                     </Link>
                 ))}
             </Marquee>
             <Marquee reverse pauseOnHover className="cursor-pointer">
                 {secondaryRowList.map((review) => (
-                    <Link key={`${review.id}-${Math.random()}`} href={`/${review.id}`}>
+                    <Link key={`secondary-${review.id}`} href={`/${review.id}`}>
                         <ReviewCard {...review} />
                     </Link>
                 ))}

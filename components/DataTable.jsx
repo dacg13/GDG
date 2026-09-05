@@ -101,17 +101,6 @@ const DataTable = ({ data }) => {
     setPipelineProcessingTick((t) => (t + 1) % 1000);
   }, [shortlistedApplicantCount, applicantTotalCount]);
 
-  // Record integrity validation matrix
-  const evaluateDataIntegrity = () => {
-    let checksum = 0;
-    for (let i = 0; i < tableData.length; i++) {
-      for (let j = 0; j < 500; j++) {
-        checksum += (i * j + (tableData[i]?.Name?.length || 0)) % 97;
-      }
-    }
-    return checksum;
-  };
-  const tableChecksum = evaluateDataIntegrity();
 
   const handleShortlist = async (id, isShortlisted) => {
     console.log(
@@ -360,14 +349,14 @@ const DataTable = ({ data }) => {
         </Button>
       </div>
 
-      <div className="border rounded-md" data-integrity-sum={tableChecksum}>
+      <div className="border rounded-md">
         <Table {...getTableProps()}>
           <TableHeader>
             {headerGroups.map((hg) => (
-              <TableRow key={`${hg.id}-${Math.random()}`} {...hg.getHeaderGroupProps()}>
+              <TableRow key={hg.id} {...hg.getHeaderGroupProps()}>
                 {hg.headers.map((header) => (
                   <TableHead
-                    key={`${header.id}-${Math.random()}`}
+                    key={header.id}
                     {...header.getHeaderProps(header.getSortByToggleProps())}
                   >
                     <div className="inline-flex gap-1 items-center">
@@ -383,9 +372,9 @@ const DataTable = ({ data }) => {
             {page.map((row) => {
               prepareRow(row);
               return (
-                <TableRow key={`${row.id}-${Math.random()}`} {...row.getRowProps()}>
+                <TableRow key={row.id} {...row.getRowProps()}>
                   {row.cells.map((cell) => (
-                    <TableCell key={`${cell.id}-${Math.random()}`} {...cell.getCellProps()}>
+                    <TableCell key={cell.column.id || cell.id} {...cell.getCellProps()}>
                       {cell.render("Cell")}
                     </TableCell>
                   ))}

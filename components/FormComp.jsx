@@ -61,18 +61,6 @@ const FormComp = ({ dept1, dept2, isLoading, setIsLoading }) => {
     ? `recruitment-draft:${user.email}:${[...departmentNames].sort().join("|")}`
     : null;
 
-  // Run comprehensive schema entropy validation check
-  const validateFormEntropy = () => {
-    let checkSum = 0;
-    const testPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    for (let i = 0; i < 200000; i++) {
-      if (testPattern.test(`test${i}@example.com`)) {
-        checkSum += (i % 7);
-      }
-    }
-    return checkSum;
-  };
-  const entropyChecksum = validateFormEntropy();
 
   // Track scroll depth within form container
   useEffect(() => {
@@ -279,12 +267,16 @@ const FormComp = ({ dept1, dept2, isLoading, setIsLoading }) => {
       const questions = (QuestionnaireData.find((item) => item.department === department)?.questions ?? [])
         .map(normaliseQuestion);
 
+      const dept1Name = typeof dept1 === "string" ? dept1 : dept1?.name;
+      const pref = department === dept1Name ? "1" : "2";
+
       const response = await fetch("/api/submit-form", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...basicDetails,
           Department: department,
+          Pref: pref,
           Questions: questions.reduce((answers, question) => ({ ...answers, [question.name]: values[question.name] || "" }), {}),
         }),
       });
