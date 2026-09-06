@@ -1,8 +1,7 @@
 require("dotenv").config();
 import nodemailer from "nodemailer";
 import { reviews } from "@/constants";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getAdminSession } from "@/lib/authorize";
 import { connect } from "@/lib/db";
 
 const transporter = nodemailer.createTransport({
@@ -14,14 +13,14 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function POST(req) {
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) {
+    const { status } = await getAdminSession();
+    if (status === "unauthenticated") {
         return new Response(
             JSON.stringify({ error: "Unauthorized" }),
             { status: 401 }
         );
     }
-    if (session.user.role !== "admin") {
+    if (status === "forbidden") {
         return new Response(
             JSON.stringify({ error: "Forbidden" }),
             { status: 403 }

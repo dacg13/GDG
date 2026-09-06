@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
 import { connect, serializeFirestoreData } from '@/lib/db';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
+import { getAdminSession } from '@/lib/authorize';
 
 export async function PATCH(req, { params }) {
     try {
-        const session = await auth.api.getSession({ headers: await headers() });
-        if (!session) {
+        const { status } = await getAdminSession();
+        if (status === 'unauthenticated') {
             return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
         }
-        if (session.user.role !== 'admin') {
+        if (status === 'forbidden') {
             return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
         }
 

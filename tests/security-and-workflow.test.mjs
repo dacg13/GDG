@@ -8,6 +8,29 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
 
+// --- SHARED HELPER: lib/authorize.js ---
+test("Shared helper: lib/authorize.js centralizes session + admin role verification", () => {
+  const helperPath = path.join(rootDir, "lib/authorize.js");
+  const helperContent = fs.readFileSync(helperPath, "utf-8");
+
+  assert.ok(
+    helperContent.includes("auth.api.getSession"),
+    "authorize.js must call auth.api.getSession"
+  );
+  assert.ok(
+    helperContent.includes('role !== "admin"'),
+    "authorize.js must check session.user.role !== 'admin'"
+  );
+  assert.ok(
+    helperContent.includes("export async function getAdminSession"),
+    "authorize.js must export getAdminSession as a named async function"
+  );
+  assert.ok(
+    helperContent.includes('"unauthenticated"') && helperContent.includes('"forbidden"') && helperContent.includes('"ok"'),
+    "authorize.js must return status discriminants: unauthenticated, forbidden, ok"
+  );
+});
+
 // --- STEP 1: FIRESTORE RULES VERIFICATION ---
 test("Step 1: firestore.rules completely denies direct client read/write", () => {
   const rulesPath = path.join(rootDir, "firestore.rules");
@@ -24,36 +47,35 @@ test("Step 1: firestore.rules completely denies direct client read/write", () =>
 });
 
 // --- STEP 2: ADMIN RSC PAGE LEAK PREVENTION ---
-test("Step 2: AdminPage verifies authentication and admin role BEFORE querying formData", () => {
+test("Step 2: AdminPage calls getAdminSession() BEFORE querying formData", () => {
   const adminPagePath = path.join(rootDir, "app/(pages)/admin/page.jsx");
   const adminPageContent = fs.readFileSync(adminPagePath, "utf-8");
 
-  const sessionCheckIdx = adminPageContent.indexOf("auth.api.getSession");
-  const redirectCheckIdx = adminPageContent.indexOf('session.user.role !== "admin"');
+  const authCheckIdx = adminPageContent.indexOf("getAdminSession()");
   const dbFetchIdx = adminPageContent.indexOf('db.collection("formData").get()');
 
-  assert.ok(sessionCheckIdx !== -1, "auth.api.getSession must be invoked");
-  assert.ok(redirectCheckIdx !== -1, "session.user.role !== 'admin' must be validated");
+  assert.ok(authCheckIdx !== -1, "getAdminSession() must be invoked");
   assert.ok(dbFetchIdx !== -1, "Firestore formData fetch must exist");
 
   assert.ok(
-    sessionCheckIdx < dbFetchIdx,
-    "auth.api.getSession must be executed strictly before fetching formData"
+    authCheckIdx < dbFetchIdx,
+    "getAdminSession() must be executed strictly before fetching formData"
   );
+
   assert.ok(
-    redirectCheckIdx < dbFetchIdx,
-    "Admin role authorization redirect must occur strictly before fetching formData"
+    adminPageContent.includes('redirect("/")'),
+    "Non-ok status must redirect to '/'"
   );
 });
 
 // --- STEP 3: ADMIN APPLICANTS API AUTHORIZATION ---
-test("Step 3: /api/admin/applicants route enforces 401 for unauthenticated and 403 for non-admin", () => {
+test("Step 3: /api/admin/applicants route calls getAdminSession() and enforces 401/403", () => {
   const routePath = path.join(rootDir, "app/api/admin/applicants/route.js");
   const routeContent = fs.readFileSync(routePath, "utf-8");
 
   assert.ok(
-    routeContent.includes("auth.api.getSession"),
-    "Must fetch session via auth.api.getSession"
+    routeContent.includes("getAdminSession()"),
+    "Must call getAdminSession()"
   );
   assert.ok(
     routeContent.includes('{ status: 401 }') || routeContent.includes("status: 401"),
@@ -64,19 +86,23 @@ test("Step 3: /api/admin/applicants route enforces 401 for unauthenticated and 4
     "Must return 403 for non-admin callers"
   );
 
-  const authCheckIdx = routeContent.indexOf('session.user.role !== "admin"');
+  const authCheckIdx = routeContent.indexOf("getAdminSession()");
   const dbFetchIdx = routeContent.indexOf('db.collection("formData").get()');
   assert.ok(
     authCheckIdx !== -1 && authCheckIdx < dbFetchIdx,
-    "Role check must precede Firestore data retrieval"
+    "getAdminSession() must precede Firestore data retrieval"
   );
 });
 
 // --- STEP 4: SHORTLISTING API AUTHORIZATION & VALIDATION ---
-test("Step 4: /api/shortlist/[id] enforces auth, boolean validation, and 404 on missing doc", () => {
+test("Step 4: /api/shortlist/[id] calls getAdminSession(), validates boolean, and 404 on missing doc", () => {
   const routePath = path.join(rootDir, "app/api/shortlist/[id]/route.js");
   const routeContent = fs.readFileSync(routePath, "utf-8");
 
+  assert.ok(
+    routeContent.includes("getAdminSession()"),
+    "Must call getAdminSession()"
+  );
   assert.ok(
     routeContent.includes("status: 401"),
     "Must return 401 when no session is present"
@@ -105,10 +131,14 @@ test("Step 4: /api/shortlist/[id] enforces auth, boolean validation, and 404 on 
 });
 
 // --- STEP 5: EMAIL ENDPOINT AUTHORIZATION, RECIPIENT VALIDATION & BATCH ISOLATION ---
-test("Step 5: /api/send-email enforces auth, verifies recipient against formData, and isolates failures", () => {
+test("Step 5: /api/send-email calls getAdminSession(), verifies recipient against formData, and isolates failures", () => {
   const routePath = path.join(rootDir, "app/api/send-email/route.js");
   const routeContent = fs.readFileSync(routePath, "utf-8");
 
+  assert.ok(
+    routeContent.includes("getAdminSession()"),
+    "Must call getAdminSession()"
+  );
   assert.ok(
     routeContent.includes("status: 401"),
     "Must return 401 when unauthenticated"

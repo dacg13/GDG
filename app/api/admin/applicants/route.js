@@ -1,17 +1,16 @@
 import { connect, serializeFirestoreData } from "@/lib/db";
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getAdminSession } from "@/lib/authorize";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) {
+    const { status } = await getAdminSession();
+    if (status === "unauthenticated") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (session.user.role !== "admin") {
+    if (status === "forbidden") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
