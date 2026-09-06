@@ -2,32 +2,15 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bricolage_Grotesque, Space_Grotesk } from "next/font/google";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
-import { toast } from "sonner";
-import DWASFWLoader from "@/components/GDGLoader";
-
-const bricolageGrotesque = Bricolage_Grotesque({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-bricolage-grotesque",
-});
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  variable: "--font-space-grotesk",
-});
+import TicketStub from "@/components/ui/TicketStub";
+import Button from "@/components/ui/button";
+import Input from "@/components/ui/input";
+import { FaGoogle } from "react-icons/fa";
+import { AlertCircle, ArrowLeft, Ticket } from "lucide-react";
+import NavBar from "@/components/NavBar";
+import Footer from "@/components/Footer";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -37,7 +20,9 @@ export default function SignInPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   useEffect(() => {
     if (session?.user && !isPending) {
@@ -45,33 +30,36 @@ export default function SignInPage() {
     }
   }, [session, isPending, router]);
 
-  if (isPending) {
-    return <DWASFWLoader />;
-  }
-
-  if (session?.user) {
-    return (
-      <div className="min-h-screen bg-[#0d0d11] flex items-center justify-center">
-        <div className="text-center text-white">
-          <p className="text-sm text-zinc-400">Redirecting...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    setErrorMessage("");
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+    } catch (err) {
+      console.error("Google sign-in error:", err);
+      setErrorMessage("Google check-in failed. Please try again or use your credentials.");
+      setIsGoogleLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
+
     if (!email || !password) {
-      toast.error("Please fill in all required fields.");
+      setErrorMessage("Please enter both email address and password.");
       return;
     }
 
     if (mode === "signup" && !name) {
-      toast.error("Please enter your name.");
+      setErrorMessage("Please enter your full name.");
       return;
     }
 
-    setSubmitting(true);
+    setIsSubmitting(true);
     try {
       if (mode === "signup") {
         const res = await authClient.signUp.email({
@@ -81,9 +69,8 @@ export default function SignInPage() {
           callbackURL: "/",
         });
         if (res?.error) {
-          toast.error(res.error.message || "Failed to create account.");
+          setErrorMessage(res.error.message || "Failed to create candidate pass.");
         } else {
-          toast.success("Account created successfully!");
           router.push("/");
         }
       } else {
@@ -93,93 +80,209 @@ export default function SignInPage() {
           callbackURL: "/",
         });
         if (res?.error) {
-          toast.error(res.error.message || "Invalid credentials.");
+          setErrorMessage(res.error.message || "Invalid credentials. Please verify your details.");
         } else {
-          toast.success("Signed in successfully!");
           router.push("/");
         }
       }
     } catch (err) {
       console.error("Auth error:", err);
-      toast.error("Authentication failed. Please check your credentials.");
+      setErrorMessage("Check-in validation failed. Please check your credentials.");
     } finally {
-      setSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
-  return (
-    <main style={{ padding: "20px", maxWidth: "400px", margin: "40px auto" }}>
-      <h1>Recruitment 2026</h1>
-      <p>Candidate Portal</p>
-
-      <div>
-        <button
-          type="button"
-          onClick={() => setMode("signin")}
-          disabled={mode === "signin"}
-        >
-          Sign In
-        </button>
-        {" | "}
-        <button
-          type="button"
-          onClick={() => setMode("signup")}
-          disabled={mode === "signup"}
-        >
-          Create Account
-        </button>
-      </div>
-
-      <hr />
-
-      <h2>{mode === "signin" ? "Sign In" : "Create Account"}</h2>
-
-      <form onSubmit={handleSubmit}>
-        {mode === "signup" && (
-          <div style={{ marginBottom: "12px" }}>
-            <label htmlFor="name">Full Name: </label>
-            <br />
-            <input
-              id="name"
-              type="text"
-              placeholder="Jane Doe"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
+  if (isPending) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[var(--color-bg)]">
+        <NavBar />
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="font-mono text-sm text-[var(--color-ink-muted)] flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-pulse" />
+            <span>CONNECTING TO CHECK-IN TERMINAL...</span>
           </div>
-        )}
-
-        <div style={{ marginBottom: "12px" }}>
-          <label htmlFor="email">Email Address: </label>
-          <br />
-          <input
-            id="email"
-            type="email"
-            placeholder="name@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
         </div>
+        <Footer />
+      </div>
+    );
+  }
 
-        <div style={{ marginBottom: "12px" }}>
-          <label htmlFor="password">Password: </label>
-          <br />
-          <input
-            id="password"
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+  return (
+    <div className="min-h-screen flex flex-col bg-[var(--color-bg)]">
+      <NavBar />
+
+      <main className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6">
+        <div className="w-full max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
+          {/* Back link */}
+          <div className="mb-4">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-[var(--color-ink-muted)] hover:text-[var(--color-primary)] transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Return to Terminal</span>
+            </Link>
+          </div>
+
+          {/* Ticket-Stub Auth Container */}
+          <TicketStub
+            className="shadow-[var(--shadow-float)]"
+            stub={
+              <div className="flex flex-col justify-between h-full text-center sm:text-left py-2">
+                <div>
+                  <div className="flex items-center gap-1.5 text-[var(--color-accent)] mb-2 font-mono text-[11px] font-semibold tracking-wider uppercase">
+                    <Ticket className="w-3.5 h-3.5" />
+                    <span>CHECK-IN GATE</span>
+                  </div>
+                  <h3 className="font-display text-base font-semibold text-[var(--color-ink)]">
+                    Candidate Pass
+                  </h3>
+                  <p className="font-body text-xs text-[var(--color-ink-muted)] mt-1 leading-relaxed">
+                    Verify your identity to board your application or check your departure status.
+                  </p>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-[var(--color-border)] font-mono text-[10px] text-[var(--color-ink-muted)] space-y-1">
+                  <div>TERM · CNCS-2026</div>
+                  <div>STATUS · CHECK-IN OPEN</div>
+                </div>
+              </div>
+            }
+          >
+            {/* Header */}
+            <div className="mb-6">
+              <div className="font-mono text-xs uppercase tracking-widest text-[var(--color-accent)] font-semibold mb-1">
+                STEP 00 · IDENTIFICATION
+              </div>
+              <h2 className="font-display text-2xl font-semibold text-[var(--color-ink)]">
+                {mode === "signin" ? "Candidate Check-In" : "Create Candidate Pass"}
+              </h2>
+            </div>
+
+            {/* Error banner */}
+            {errorMessage && (
+              <div
+                role="alert"
+                className="mb-5 p-3 rounded-[var(--radius-sharp)] border border-[var(--color-error)]/40 bg-[var(--color-error)]/10 text-[var(--color-error)] font-body text-xs flex items-start gap-2.5"
+              >
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span className="leading-relaxed">{errorMessage}</span>
+              </div>
+            )}
+
+            {/* Google OAuth Action (Dominant per designing.md Section 6) */}
+            <div className="mb-6">
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleGoogleSignIn}
+                isLoading={isGoogleLoading}
+                className="w-full gap-2.5 bg-[var(--color-primary)]"
+              >
+                <FaGoogle className="w-4 h-4 text-white" />
+                <span>Continue with Google</span>
+              </Button>
+            </div>
+
+            {/* Hairline Divider */}
+            <div className="relative flex items-center justify-center my-6">
+              <div className="w-full border-t border-[var(--color-border)]" />
+              <span className="absolute bg-[var(--color-surface)] px-3 font-mono text-[11px] uppercase tracking-wider text-[var(--color-ink-muted)]">
+                or with email pass
+              </span>
+            </div>
+
+            {/* Email Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {mode === "signup" && (
+                <div>
+                  <label
+                    htmlFor="name"
+                    className="block font-body text-xs font-semibold text-[var(--color-ink)] mb-1"
+                  >
+                    Full Name
+                  </label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="e.g. Jane Doe"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block font-body text-xs font-semibold text-[var(--color-ink)] mb-1"
+                >
+                  Email Address
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="candidate@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block font-body text-xs font-semibold text-[var(--color-ink)] mb-1"
+                >
+                  Password
+                </label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  isLoading={isSubmitting}
+                  className="w-full"
+                >
+                  {mode === "signin" ? "Check In" : "Generate Pass & Continue"}
+                </Button>
+              </div>
+            </form>
+
+            {/* Mode toggle */}
+            <div className="mt-6 pt-4 border-t border-[var(--color-border)] flex items-center justify-between text-xs font-body text-[var(--color-ink-muted)]">
+              <span>
+                {mode === "signin"
+                  ? "New candidate to the concourse?"
+                  : "Already hold a candidate pass?"}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode(mode === "signin" ? "signup" : "signin");
+                  setErrorMessage("");
+                }}
+                className="font-semibold text-[var(--color-primary)] hover:underline uppercase tracking-wider font-mono text-[11px]"
+              >
+                {mode === "signin" ? "Create Pass" : "Sign In"}
+              </button>
+            </div>
+          </TicketStub>
         </div>
+      </main>
 
-        <button type="submit" disabled={submitting}>
-          {submitting ? "Processing..." : mode === "signin" ? "Sign In" : "Create Account"}
-        </button>
-      </form>
-    </main>
+      <Footer />
+    </div>
   );
 }

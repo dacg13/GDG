@@ -17,6 +17,11 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        display: ["var(--font-display)", "Georgia", "serif"],
+        body: ["var(--font-body)", "sans-serif"],
+        mono: ["var(--font-mono)", "monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -51,14 +56,35 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        validation: {
-          light: "#FFCCCB", // Light red for validation messages
+        concourse: {
+          bg: "var(--color-bg)",
+          "bg-admin": "var(--color-bg-admin)",
+          surface: "var(--color-surface)",
+          ink: "var(--color-ink)",
+          "ink-muted": "var(--color-ink-muted)",
+          primary: "var(--color-primary)",
+          "primary-hover": "var(--color-primary-hover)",
+          accent: "var(--color-accent)",
+          stamp: "var(--color-stamp)",
+          border: "var(--color-border)",
+          success: "var(--color-success)",
+          warning: "var(--color-warning)",
+          error: "var(--color-error)",
         },
       },
       borderRadius: {
+        sharp: "var(--radius-sharp)",
+        input: "var(--radius-input)",
+        button: "var(--radius-button)",
+        panel: "var(--radius-panel)",
+        pill: "var(--radius-pill)",
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      boxShadow: {
+        float: "var(--shadow-float)",
+        modal: "var(--shadow-modal)",
       },
       keyframes: {
         "shine-pulse": {

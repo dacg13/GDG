@@ -1,5 +1,4 @@
 import React from "react";
-import NavBar from "@/components/NavBar";
 import { connect, serializeFirestoreData } from "@/lib/db";
 import AdminContent from "@/components/AdminContent";
 import { getAdminSession } from "@/lib/authorize";
@@ -20,8 +19,7 @@ export default async function AdminPage() {
   }));
 
   return (
-    <main>
-      <NavBar />
+    <main className="min-h-screen bg-[var(--color-bg-admin)]">
       <AdminContent applicants={applicants} />
     </main>
   );
