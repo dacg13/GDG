@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { connect, serializeFirestoreData } from '@/lib/db';
+import { connect, serializeApplicant } from '@/lib/db';
 import { getAdminSession } from '@/lib/authorize';
 
 export async function PATCH(req, { params }) {
@@ -29,11 +29,7 @@ export async function PATCH(req, { params }) {
         await docRef.update({ shortlisted: body.shortlisted });
         const updatedSnapshot = await docRef.get();
 
-        const applicant = {
-            id: updatedSnapshot.id,
-            _id: updatedSnapshot.id,
-            ...serializeFirestoreData(updatedSnapshot.data()),
-        };
+        const applicant = serializeApplicant(updatedSnapshot);
 
         return NextResponse.json({ success: true, data: applicant });
     } catch (error) {

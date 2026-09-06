@@ -3,8 +3,10 @@
   - Reverted typescript to ^7.0.2 in package.json; npm install, next build, and test suite all clean with no errors.
 - [x] Step 10 — Add Explicit Firestore Composite Index Configuration
   - Created firestore.indexes.json for formData (Email ASC, Department ASC) and linked it in firebase.json.
-- [ ] Step 11 — Shared serializeApplicant Helper
-- [ ] Step 12 — Shared "Own-Email" Authorization Helper
+- [x] Step 11 — Shared serializeApplicant Helper
+  - Added serializeApplicant to lib/db.ts; updated admin/applicants, get-submissions, and shortlist/[id] routes; added automated test.
+- [x] Step 12 — Shared "Own-Email" Authorization Helper
+  - Created lib/ownDataAuth.js (verifyOwnEmailAccess); refactored get-submissions and check-applications routes; added automated test.
 - [ ] Step 13 — Move the Hardcoded Submission Deadline to an Environment Variable
 - [ ] Step 14 — Consistent Error Response Shape Across All Routes
 - [ ] Step 15 — Clarify Department Display-Name Mapping in the Email Endpoint

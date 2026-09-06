@@ -456,3 +456,75 @@ test("Rate Limiting Simulation: Fixed-window counter allows exactly `limit` requ
   const differentKey = await mockCheckRateLimit({ key: "test-route:user_xyz", limit, windowSeconds: WINDOW_SECONDS });
   assert.equal(differentKey.allowed, true, "A different key must not be affected by another key's limit");
 });
+
+// --- STEP 11: serializeApplicant helper ---
+test("Step 11: lib/db.ts exports serializeApplicant and call sites use it without inline duplication", () => {
+  const dbPath = path.join(rootDir, "lib/db.ts");
+  const dbContent = fs.readFileSync(dbPath, "utf-8");
+
+  assert.ok(
+    dbContent.includes("export const serializeApplicant"),
+    "lib/db.ts must export serializeApplicant"
+  );
+  assert.ok(
+    dbContent.includes("id: doc.id") && dbContent.includes("_id: doc.id"),
+    "serializeApplicant must set both id and _id"
+  );
+
+  const callSites = [
+    "app/api/admin/applicants/route.js",
+    "app/api/get-submissions/route.js",
+    "app/api/shortlist/[id]/route.js",
+  ];
+
+  for (const relPath of callSites) {
+    const fileContent = fs.readFileSync(path.join(rootDir, relPath), "utf-8");
+    assert.ok(
+      fileContent.includes("serializeApplicant"),
+      `${relPath} must import and use serializeApplicant`
+    );
+    assert.ok(
+      !fileContent.includes("_id: doc.id") && !fileContent.includes("_id: updatedSnapshot.id"),
+      `${relPath} must not duplicate inline { id, _id, ... } construction`
+    );
+  }
+});
+
+// --- STEP 12: verifyOwnEmailAccess helper ---
+test("Step 12: lib/ownDataAuth.js exports verifyOwnEmailAccess and call sites use it", () => {
+  const helperPath = path.join(rootDir, "lib/ownDataAuth.js");
+  assert.ok(fs.existsSync(helperPath), "lib/ownDataAuth.js must exist");
+
+  const helperContent = fs.readFileSync(helperPath, "utf-8");
+  assert.ok(
+    helperContent.includes("export async function verifyOwnEmailAccess"),
+    "lib/ownDataAuth.js must export verifyOwnEmailAccess"
+  );
+  assert.ok(
+    helperContent.includes('status: "unauthenticated"') &&
+    helperContent.includes('status: "missing-email"') &&
+    helperContent.includes('status: "forbidden"') &&
+    helperContent.includes('status: "ok"'),
+    "verifyOwnEmailAccess must cover all 4 status states"
+  );
+
+  const callSites = [
+    "app/api/get-submissions/route.js",
+    "app/api/check-applications/route.js",
+  ];
+
+  for (const relPath of callSites) {
+    const fileContent = fs.readFileSync(path.join(rootDir, relPath), "utf-8");
+    assert.ok(
+      fileContent.includes("verifyOwnEmailAccess"),
+      `${relPath} must import and use verifyOwnEmailAccess`
+    );
+    assert.ok(
+      fileContent.includes('status === "unauthenticated"') &&
+      fileContent.includes('status === "missing-email"') &&
+      fileContent.includes('status === "forbidden"'),
+      `${relPath} must handle all 3 error statuses from helper`
+    );
+  }
+});
+

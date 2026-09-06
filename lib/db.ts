@@ -74,3 +74,11 @@ export const serializeFirestoreData = (value: any): any => {
 
   return value;
 };
+
+export const serializeApplicant = (
+  doc: FirebaseFirestore.DocumentSnapshot,
+): any => ({
+  id: doc.id,
+  _id: doc.id,
+  ...serializeFirestoreData(doc.data()),
+});

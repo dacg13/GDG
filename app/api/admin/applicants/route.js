@@ -1,4 +1,4 @@
-import { connect, serializeFirestoreData } from "@/lib/db";
+import { connect, serializeApplicant } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/authorize";
 
@@ -16,11 +16,7 @@ export async function GET() {
 
     const db = await connect();
     const snapshot = await db.collection("formData").get();
-    const applicants = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      _id: doc.id,
-      ...serializeFirestoreData(doc.data()),
-    }));
+    const applicants = snapshot.docs.map((doc) => serializeApplicant(doc));
 
     return NextResponse.json({ applicants });
   } catch (error) {
