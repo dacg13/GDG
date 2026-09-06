@@ -13,6 +13,23 @@ const transporter = nodemailer.createTransport({
     },
 });
 
+// Maps a specific department's real name to the broader group name shown to
+// applicants in email content. This lookup currently has no effect while
+// department names in constants/index.js are placeholder/obfuscated values —
+// it applies once the real department names ("Web Development", "App
+// Development", "Photography", "Video Editing", etc.) are restored. Do not
+// remove this mapping; it reflects intentional grouping for recipient-facing
+// email copy, not leftover/dead logic.
+const DEPARTMENT_EMAIL_ALIASES = {
+  "Video Editing": "Photography",
+};
+const DEPARTMENT_EMAIL_GROUPS = {
+  "Web Development": "Development Department",
+  "App Development": "Development Department",
+  "Photography": "Photography & Video Editing Department",
+  "Video Editing": "Photography & Video Editing Department",
+};
+
 export async function POST(req) {
     const { session, status } = await getAdminSession();
     if (status === "unauthenticated") {
@@ -65,27 +82,14 @@ export async function POST(req) {
                     throw new Error(`Recipient not found in formData: ${recipient.Email}`);
                 }
 
-                let depart = recipient.Department;
-                if (depart === "Video Editing") {
-                    depart = "Photography";
-                }
+                const depart = DEPARTMENT_EMAIL_ALIASES[recipient.Department] || recipient.Department;
                 const dept = reviews.find((item) => item.name === depart);
 
                 if (!dept) {
                     throw new Error(`Department not found: ${recipient.Department}`);
                 }
 
-                let deptName = dept.name;
-                if (
-                    deptName === "Web Development" ||
-                    deptName === "App Development"
-                ) {
-                    deptName = "Development Department";
-                }
-
-                if (deptName === "Photography" || deptName === "Video Editing") {
-                    deptName = "Photography & Video Editing Department";
-                }
+                const deptName = DEPARTMENT_EMAIL_GROUPS[dept.name] || dept.name;
 
                 let generalTemp = `
                 <div>

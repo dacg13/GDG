@@ -11,4 +11,5 @@
   - Moved submit-form deadline to process.env.SUBMISSION_DEADLINE with default fallback and documented in .env.example.
 - [x] Step 14 — Consistent Error Response Shape Across All Routes
   - Ensured all 4xx/5xx responses across all 7 API routes include both error and message keys; added automated test.
-- [ ] Step 15 — Clarify Department Display-Name Mapping in the Email Endpoint
+- [x] Step 15 — Clarify Department Display-Name Mapping in the Email Endpoint
+  - Replaced inline if-statements in send-email with documented DEPARTMENT_EMAIL_ALIASES and DEPARTMENT_EMAIL_GROUPS constants; added automated test.

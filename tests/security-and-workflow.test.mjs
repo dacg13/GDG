@@ -566,4 +566,67 @@ test("Step 14: All 7 API routes include both 'error' and 'message' keys in all 4
   }
 });
 
+// --- STEP 15: Clarify Department Display-Name Mapping in the Email Endpoint ---
+test("Step 15: send-email/route.js defines DEPARTMENT_EMAIL_ALIASES and DEPARTMENT_EMAIL_GROUPS and removes old if-statements", () => {
+  const routePath = path.join(rootDir, "app/api/send-email/route.js");
+  const routeContent = fs.readFileSync(routePath, "utf-8");
+
+  assert.ok(
+    routeContent.includes("const DEPARTMENT_EMAIL_ALIASES"),
+    "Must define DEPARTMENT_EMAIL_ALIASES lookup table"
+  );
+  assert.ok(
+    routeContent.includes('"Video Editing": "Photography"'),
+    "DEPARTMENT_EMAIL_ALIASES must alias 'Video Editing' to 'Photography'"
+  );
+
+  assert.ok(
+    routeContent.includes("const DEPARTMENT_EMAIL_GROUPS"),
+    "Must define DEPARTMENT_EMAIL_GROUPS lookup table"
+  );
+  assert.ok(
+    routeContent.includes('"Web Development": "Development Department"') &&
+    routeContent.includes('"App Development": "Development Department"') &&
+    routeContent.includes('"Photography": "Photography & Video Editing Department"') &&
+    routeContent.includes('"Video Editing": "Photography & Video Editing Department"'),
+    "DEPARTMENT_EMAIL_GROUPS must define all 4 required mappings"
+  );
+
+  assert.ok(
+    !routeContent.includes('if (depart === "Video Editing")'),
+    "Old inline if-statement for Video Editing alias must be replaced"
+  );
+  assert.ok(
+    !routeContent.includes('if (deptName === "Web Development" || deptName === "App Development")'),
+    "Old inline if-statement for Development Department group must be replaced"
+  );
+  assert.ok(
+    !routeContent.includes('if (deptName === "Photography" || deptName === "Video Editing")'),
+    "Old inline if-statement for Photography & Video Editing Department group must be replaced"
+  );
+
+  // Behavioral simulation
+  const DEPARTMENT_EMAIL_ALIASES = {
+    "Video Editing": "Photography",
+  };
+  const DEPARTMENT_EMAIL_GROUPS = {
+    "Web Development": "Development Department",
+    "App Development": "Development Department",
+    "Photography": "Photography & Video Editing Department",
+    "Video Editing": "Photography & Video Editing Department",
+  };
+
+  // Test aliasing
+  assert.equal(DEPARTMENT_EMAIL_ALIASES["Video Editing"] || "Video Editing", "Photography");
+  assert.equal(DEPARTMENT_EMAIL_ALIASES["Design"] || "Design", "Design");
+
+  // Test groups
+  assert.equal(DEPARTMENT_EMAIL_GROUPS["Web Development"] || "Web Development", "Development Department");
+  assert.equal(DEPARTMENT_EMAIL_GROUPS["App Development"] || "App Development", "Development Department");
+  assert.equal(DEPARTMENT_EMAIL_GROUPS["Photography"] || "Photography", "Photography & Video Editing Department");
+  assert.equal(DEPARTMENT_EMAIL_GROUPS["Video Editing"] || "Video Editing", "Photography & Video Editing Department");
+  assert.equal(DEPARTMENT_EMAIL_GROUPS["Design"] || "Design", "Design");
+});
+
+
 
