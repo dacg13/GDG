@@ -2,6 +2,7 @@ import { connect } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { FieldValue } from "firebase-admin/firestore";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,18 @@ export async function POST(req) {
     const user = session.user;
     const userId = user.id;
     const userEmail = user.email;
+
+    const rateLimit = await checkRateLimit({
+      key: `submit-form:${userId}`,
+      limit: 10,
+      windowSeconds: 60,
+    });
+    if (!rateLimit.allowed) {
+      return new Response(
+        JSON.stringify({ message: "Too many requests. Please wait a moment and try again." }),
+        { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
+      );
+    }
 
     const deadline = new Date("2026-08-23T23:59:59+05:30");
     if (new Date() > deadline)

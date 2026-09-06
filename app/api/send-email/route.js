@@ -3,6 +3,7 @@ import nodemailer from "nodemailer";
 import { reviews } from "@/constants";
 import { getAdminSession } from "@/lib/authorize";
 import { connect } from "@/lib/db";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 const transporter = nodemailer.createTransport({
     service: "gmail", // or your preferred email service
@@ -13,7 +14,7 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function POST(req) {
-    const { status } = await getAdminSession();
+    const { session, status } = await getAdminSession();
     if (status === "unauthenticated") {
         return new Response(
             JSON.stringify({ error: "Unauthorized" }),
@@ -24,6 +25,18 @@ export async function POST(req) {
         return new Response(
             JSON.stringify({ error: "Forbidden" }),
             { status: 403 }
+        );
+    }
+
+    const rateLimit = await checkRateLimit({
+        key: `send-email:${session.user.id}`,
+        limit: 5,
+        windowSeconds: 60,
+    });
+    if (!rateLimit.allowed) {
+        return new Response(
+            JSON.stringify({ error: "Too many requests. Please wait a moment and try again." }),
+            { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
         );
     }
 

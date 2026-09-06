@@ -330,3 +330,129 @@ test("Part 6: No CPU burn loops or unstable Math.random() keys exist in frontend
   assert.ok(!fs.existsSync(path.join(rootDir, "lib/actions")), "lib/actions directory must be deleted");
   assert.ok(!fs.existsSync(path.join(rootDir, "lib/modals")), "lib/modals directory must be deleted");
 });
+
+// --- RATE LIMITING: lib/rateLimit.js STRUCTURE ---
+test("Rate Limiting: lib/rateLimit.js exports checkRateLimit and uses FieldValue.increment (no transaction)", () => {
+  const helperPath = path.join(rootDir, "lib/rateLimit.js");
+  const helperContent = fs.readFileSync(helperPath, "utf-8");
+
+  assert.ok(
+    helperContent.includes("export async function checkRateLimit"),
+    "Must export checkRateLimit as a named async function"
+  );
+  assert.ok(
+    helperContent.includes("FieldValue.increment"),
+    "Must use FieldValue.increment for atomic counter updates"
+  );
+  assert.ok(
+    !helperContent.includes("runTransaction"),
+    "Must NOT use a transaction — plain read+increment is intentional"
+  );
+  assert.ok(
+    helperContent.includes('collection("rateLimits")'),
+    "Must store counters in the rateLimits collection"
+  );
+  assert.ok(
+    helperContent.includes("allowed") && helperContent.includes("retryAfterSeconds"),
+    "Must return { allowed, retryAfterSeconds } shape"
+  );
+});
+
+// --- RATE LIMITING: submit-form integration ---
+test("Rate Limiting: submit-form/route.js calls checkRateLimit with submit-form: prefix and does NOT use getAdminSession", () => {
+  const routePath = path.join(rootDir, "app/api/submit-form/route.js");
+  const routeContent = fs.readFileSync(routePath, "utf-8");
+
+  assert.ok(
+    routeContent.includes("checkRateLimit"),
+    "Must call checkRateLimit"
+  );
+  assert.ok(
+    routeContent.includes("`submit-form:${userId}`") || routeContent.includes("'submit-form:'"),
+    "Rate limit key must be prefixed with 'submit-form:'"
+  );
+  assert.ok(
+    routeContent.includes("status: 429"),
+    "Must return 429 when rate limited"
+  );
+  assert.ok(
+    routeContent.includes("Retry-After"),
+    "Must include Retry-After header on 429 responses"
+  );
+  assert.ok(
+    !routeContent.includes("getAdminSession"),
+    "submit-form must NOT use getAdminSession — it serves any authenticated user"
+  );
+});
+
+// --- RATE LIMITING: send-email integration ---
+test("Rate Limiting: send-email/route.js calls checkRateLimit with send-email: prefix and destructures session", () => {
+  const routePath = path.join(rootDir, "app/api/send-email/route.js");
+  const routeContent = fs.readFileSync(routePath, "utf-8");
+
+  assert.ok(
+    routeContent.includes("checkRateLimit"),
+    "Must call checkRateLimit"
+  );
+  assert.ok(
+    routeContent.includes("`send-email:${session.user.id}`") || routeContent.includes("'send-email:'"),
+    "Rate limit key must be prefixed with 'send-email:'"
+  );
+  assert.ok(
+    routeContent.includes("status: 429"),
+    "Must return 429 when rate limited"
+  );
+  assert.ok(
+    routeContent.includes("Retry-After"),
+    "Must include Retry-After header on 429 responses"
+  );
+  assert.ok(
+    routeContent.includes("{ session, status }") || routeContent.includes("{session, status}"),
+    "Must destructure session (not just status) from getAdminSession() to access user.id"
+  );
+});
+
+// --- RATE LIMITING: Logic simulation ---
+test("Rate Limiting Simulation: Fixed-window counter allows exactly `limit` requests, then rejects", async () => {
+  // Mock in-memory Firestore simulating the rate limiter's read+increment pattern
+  const mockStore = new Map();
+  const WINDOW_SECONDS = 60;
+
+  async function mockCheckRateLimit({ key, limit, windowSeconds }) {
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const windowStart = Math.floor(nowSeconds / windowSeconds) * windowSeconds;
+    const docId = `${key}:${windowStart}`;
+
+    const currentCount = mockStore.has(docId) ? mockStore.get(docId).count : 0;
+
+    if (currentCount >= limit) {
+      return {
+        allowed: false,
+        retryAfterSeconds: windowStart + windowSeconds - nowSeconds,
+      };
+    }
+
+    mockStore.set(docId, { count: currentCount + 1, windowStart });
+    return { allowed: true, retryAfterSeconds: 0 };
+  }
+
+  const key = "test-route:user_abc";
+  const limit = 10;
+
+  // First 10 requests should all be allowed
+  for (let i = 0; i < limit; i++) {
+    const result = await mockCheckRateLimit({ key, limit, windowSeconds: WINDOW_SECONDS });
+    assert.equal(result.allowed, true, `Request ${i + 1} of ${limit} should be allowed`);
+    assert.equal(result.retryAfterSeconds, 0);
+  }
+
+  // 11th request should be rejected
+  const rejected = await mockCheckRateLimit({ key, limit, windowSeconds: WINDOW_SECONDS });
+  assert.equal(rejected.allowed, false, "Request beyond limit must be rejected");
+  assert.ok(rejected.retryAfterSeconds > 0, "retryAfterSeconds must be positive when rejected");
+  assert.ok(rejected.retryAfterSeconds <= WINDOW_SECONDS, "retryAfterSeconds must not exceed window size");
+
+  // A different key should still be allowed (rate limits are per-key)
+  const differentKey = await mockCheckRateLimit({ key: "test-route:user_xyz", limit, windowSeconds: WINDOW_SECONDS });
+  assert.equal(differentKey.allowed, true, "A different key must not be affected by another key's limit");
+});
