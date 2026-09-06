@@ -1,6 +1,6 @@
 # GDG Cleanup Progress (Steps 9–15)
 - [x] Step 9 — Resolve the Unexplained TypeScript Downgrade
-  - Reverted typescript to ^7.0.2 in package.json; npm install, next build, and test suite all clean with no errors.
+  - Reverted attempt to ^7.0.2 due to a real peer-dependency conflict with better-auth-firestore@1.2.8 (`npm error ERESOLVE could not resolve`, `npm error peer typescript@"^5.0.0" from better-auth-firestore@1.2.8`); kept ^5.4.5 as the working version. Clean install, build, and test suite all verified.
 - [x] Step 10 — Add Explicit Firestore Composite Index Configuration
   - Created firestore.indexes.json for formData (Email ASC, Department ASC) and linked it in firebase.json.
 - [x] Step 11 — Shared serializeApplicant Helper
