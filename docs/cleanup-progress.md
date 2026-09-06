@@ -7,6 +7,8 @@
   - Added serializeApplicant to lib/db.ts; updated admin/applicants, get-submissions, and shortlist/[id] routes; added automated test.
 - [x] Step 12 — Shared "Own-Email" Authorization Helper
   - Created lib/ownDataAuth.js (verifyOwnEmailAccess); refactored get-submissions and check-applications routes; added automated test.
-- [ ] Step 13 — Move the Hardcoded Submission Deadline to an Environment Variable
-- [ ] Step 14 — Consistent Error Response Shape Across All Routes
+- [x] Step 13 — Move the Hardcoded Submission Deadline to an Environment Variable
+  - Moved submit-form deadline to process.env.SUBMISSION_DEADLINE with default fallback and documented in .env.example.
+- [x] Step 14 — Consistent Error Response Shape Across All Routes
+  - Ensured all 4xx/5xx responses across all 7 API routes include both error and message keys; added automated test.
 - [ ] Step 15 — Clarify Department Display-Name Mapping in the Email Endpoint

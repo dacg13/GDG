@@ -17,13 +17,13 @@ export async function POST(req) {
     const { session, status } = await getAdminSession();
     if (status === "unauthenticated") {
         return new Response(
-            JSON.stringify({ error: "Unauthorized" }),
+            JSON.stringify({ error: "Unauthorized", message: "Unauthorized" }),
             { status: 401 }
         );
     }
     if (status === "forbidden") {
         return new Response(
-            JSON.stringify({ error: "Forbidden" }),
+            JSON.stringify({ error: "Forbidden", message: "Forbidden" }),
             { status: 403 }
         );
     }
@@ -35,7 +35,7 @@ export async function POST(req) {
     });
     if (!rateLimit.allowed) {
         return new Response(
-            JSON.stringify({ error: "Too many requests. Please wait a moment and try again." }),
+            JSON.stringify({ error: "Too many requests. Please wait a moment and try again.", message: "Too many requests. Please wait a moment and try again." }),
             { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
         );
     }
@@ -44,7 +44,7 @@ export async function POST(req) {
 
     if (!recipients || recipients.length === 0) {
         return new Response(
-            JSON.stringify({ error: "No recipients provided" }),
+            JSON.stringify({ error: "No recipients provided", message: "No recipients provided" }),
             { status: 400 }
         );
     }
@@ -128,7 +128,7 @@ export async function POST(req) {
         );
     } catch (error) {
         return new Response(
-            JSON.stringify({ error: "Failed to send emails" }),
+            JSON.stringify({ error: "Failed to send emails", message: "Failed to send emails" }),
             { status: 500 }
         );
     }

@@ -528,3 +528,42 @@ test("Step 12: lib/ownDataAuth.js exports verifyOwnEmailAccess and call sites us
   }
 });
 
+// --- STEP 14: Consistent Error Response Shape Across All Routes ---
+test("Step 14: All 7 API routes include both 'error' and 'message' keys in all 4xx/5xx responses", () => {
+  const routeFiles = [
+    "app/api/admin/applicants/route.js",
+    "app/api/shortlist/[id]/route.js",
+    "app/api/send-email/route.js",
+    "app/api/submit-form/route.js",
+    "app/api/get-submissions/route.js",
+    "app/api/check-applications/route.js",
+    "app/api/check-department-submission/route.js",
+  ];
+
+  // Regex to find response blocks with 4xx or 5xx status codes
+  // e.g. NextResponse.json(..., { status: 4xx }) or new Response(..., { status: 4xx })
+  const responsePattern = /(?:NextResponse\.json|new Response)\(\s*([\s\S]*?),\s*\{[^}]*status:\s*([45]\d\d)[^}]*\}\s*\)/g;
+
+  for (const relPath of routeFiles) {
+    const fileContent = fs.readFileSync(path.join(rootDir, relPath), "utf-8");
+    let match;
+    let errorResponseCount = 0;
+
+    while ((match = responsePattern.exec(fileContent)) !== null) {
+      errorResponseCount++;
+      const [fullMatch, bodyStr, statusCode] = match;
+
+      assert.ok(
+        bodyStr.includes("error") && bodyStr.includes("message"),
+        `${relPath} (status ${statusCode}) error response must include both 'error' and 'message' keys. Found: ${bodyStr.trim()}`
+      );
+    }
+
+    assert.ok(
+      errorResponseCount > 0,
+      `${relPath} must have at least one error response tested (found ${errorResponseCount})`
+    );
+  }
+});
+
+

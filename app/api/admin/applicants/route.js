@@ -8,10 +8,10 @@ export async function GET() {
   try {
     const { status } = await getAdminSession();
     if (status === "unauthenticated") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized", message: "Unauthorized" }, { status: 401 });
     }
     if (status === "forbidden") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Forbidden", message: "Forbidden" }, { status: 403 });
     }
 
     const db = await connect();
@@ -22,7 +22,7 @@ export async function GET() {
   } catch (error) {
     console.error("Error fetching applicants:", error);
     return NextResponse.json(
-      { error: "Failed to fetch applicants" },
+      { error: "Failed to fetch applicants", message: "Failed to fetch applicants" },
       { status: 500 }
     );
   }

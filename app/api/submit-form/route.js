@@ -23,7 +23,7 @@ export async function POST(req) {
     });
     if (!session?.user) {
       return new Response(
-        JSON.stringify({ message: "Authentication required" }),
+        JSON.stringify({ error: "Authentication required", message: "Authentication required" }),
         { status: 401 }
       );
     }
@@ -39,15 +39,18 @@ export async function POST(req) {
     });
     if (!rateLimit.allowed) {
       return new Response(
-        JSON.stringify({ message: "Too many requests. Please wait a moment and try again." }),
+        JSON.stringify({ error: "Too many requests. Please wait a moment and try again.", message: "Too many requests. Please wait a moment and try again." }),
         { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
       );
     }
 
-    const deadline = new Date("2026-08-23T23:59:59+05:30");
+    const deadline = new Date(
+      process.env.SUBMISSION_DEADLINE || "2026-08-23T23:59:59+05:30"
+    );
     if (new Date() > deadline)
       return new Response(
         JSON.stringify({
+          error: "The submission deadline has passed",
           message: "The submission deadline has passed"
         }),
         { status: 403 }
@@ -63,6 +66,7 @@ export async function POST(req) {
     if (formFields.RegistrationNumber && !regNoRegex.test(formFields.RegistrationNumber)) {
       return new Response(
         JSON.stringify({
+          error: "Registration number must be 2 numbers, 3 uppercase letters, and 4 numbers (e.g. 25BCE5612)",
           message: "Registration number must be 2 numbers, 3 uppercase letters, and 4 numbers (e.g. 25BCE5612)",
         }),
         { status: 400 }
@@ -110,6 +114,7 @@ export async function POST(req) {
       if (txError.message === "ALREADY_APPLIED_TO_DEPARTMENT") {
         return new Response(
           JSON.stringify({
+            error: `You have already submitted an application for ${Department}`,
             message: `You have already submitted an application for ${Department}`,
           }),
           { status: 400 }
@@ -118,6 +123,7 @@ export async function POST(req) {
       if (txError.message === "MAX_APPLICATIONS_REACHED") {
         return new Response(
           JSON.stringify({
+            error: "Remember that you can only submit upto 2 unique applications",
             message: "Remember that you can only submit upto 2 unique applications",
           }),
           { status: 400 }
@@ -134,7 +140,7 @@ export async function POST(req) {
     );
   } catch (error) {
     console.error("Form submission error:", error);
-    return new Response(JSON.stringify({ message: "Error submitting form" }), {
+    return new Response(JSON.stringify({ error: "Error submitting form", message: "Error submitting form" }), {
       status: 500,
     });
   }
