@@ -412,7 +412,7 @@ export default function FormComp({ dept1, dept2, isLoading, setIsLoading }) {
             <span>TRANSMISSION CONFIRMED · OFFICIAL PASS ISSUED</span>
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-semibold text-[var(--color-ink)]">
-            You're Officially Boarded.
+            You&apos;re Officially Boarded.
           </h1>
           <p className="font-body text-sm text-[var(--color-ink-muted)] mt-2">
             Your recruitment application has been safely stamped and recorded into the concourse ledger.

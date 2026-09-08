@@ -215,6 +215,7 @@ export default function DataTable({ data = [] }) {
         ),
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
