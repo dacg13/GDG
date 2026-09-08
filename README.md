@@ -43,7 +43,7 @@ Built with **Next.js 14** (App Router), **Firebase/Firestore**, **better-auth**,
 | **Rich Text Editor** | TipTap (admin email composer) |
 | **UI Primitives** | Radix UI (Dialog, Select, Dropdown, etc.) |
 | **Form Handling** | React Hook Form + Zod validation |
-| **Animations** | Framer Motion + GSAP |
+| **Animations** | Framer Motion |
 | **Icons** | Lucide React + Material Symbols SVG |
 
 ---
@@ -103,7 +103,7 @@ Built with **Next.js 14** (App Router), **Firebase/Firestore**, **better-auth**,
 │   └── index.js                     # Department data, form questions, admin list
 ├── lib/
 │   ├── auth.js                      # better-auth server config
-│   ├── auth-client.js               # better-auth client + dev mock session
+│   ├── auth-client.js               # better-auth client wrapper
 │   ├── authorize.js                 # Admin session authorization
 │   ├── db.ts                        # Firestore connection (firebase-admin)
 │   ├── ownDataAuth.js               # User data access authorization
@@ -111,7 +111,7 @@ Built with **Next.js 14** (App Router), **Firebase/Firestore**, **better-auth**,
 │   └── utils.js                     # Utility functions (cn)
 ├── tests/
 │   └── security-and-workflow.test.mjs  # Security & workflow tests
-├── functions/                       # Firebase Cloud Functions (if any)
+
 ├── tailwind.config.js               # Concourse tokens in Tailwind
 ├── next.config.mjs                  # Next.js configuration
 ├── firebase.json                    # Firebase hosting & rules config
@@ -176,10 +176,6 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
-
-#### Local Testing (Without Firebase)
-
-The sign-in page includes a **⚡ Quick Check-In** button for local development that creates a mock session in `localStorage`, bypassing the need for a live Firebase + Google OAuth setup.
 
 ### 4. Build for Production
 

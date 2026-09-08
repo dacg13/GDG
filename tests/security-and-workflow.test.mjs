@@ -310,7 +310,6 @@ test("Part 6: No CPU burn loops or unstable Math.random() keys exist in frontend
   const formComp = fs.readFileSync(path.join(rootDir, "components/FormComp.jsx"), "utf-8");
   const deptPage = fs.readFileSync(path.join(rootDir, "app/(pages)/departments/page.jsx"), "utf-8");
   const dataTable = fs.readFileSync(path.join(rootDir, "components/DataTable.jsx"), "utf-8");
-  const departmentsComp = fs.readFileSync(path.join(rootDir, "components/Departments.jsx"), "utf-8");
 
   // CPU burns
   assert.ok(!formComp.includes("validateFormEntropy"), "validateFormEntropy must be removed");
@@ -321,7 +320,6 @@ test("Part 6: No CPU burn loops or unstable Math.random() keys exist in frontend
   assert.ok(!formComp.includes("Math.random()"), "FormComp must not use Math.random()");
   assert.ok(!deptPage.includes("Math.random()"), "Departments page must not use Math.random()");
   assert.ok(!dataTable.includes("Math.random()"), "DataTable must not use Math.random()");
-  assert.ok(!departmentsComp.includes("Math.random()"), "Departments component must not use Math.random()");
 
   // Pref capture
   assert.ok(formComp.includes("Pref: pref") || formComp.includes("Pref"), "FormComp must submit Pref field");
@@ -329,7 +327,11 @@ test("Part 6: No CPU burn loops or unstable Math.random() keys exist in frontend
   // Dead ORM layer deleted
   assert.ok(!fs.existsSync(path.join(rootDir, "lib/actions")), "lib/actions directory must be deleted");
   assert.ok(!fs.existsSync(path.join(rootDir, "lib/modals")), "lib/modals directory must be deleted");
+
+  // Departments.jsx was merged into the departments page during the UI redesign
+  assert.ok(!fs.existsSync(path.join(rootDir, "components/Departments.jsx")), "Old Departments.jsx should be removed (merged into departments page)");
 });
+
 
 // --- RATE LIMITING: lib/rateLimit.js STRUCTURE ---
 test("Rate Limiting: lib/rateLimit.js exports checkRateLimit and uses FieldValue.increment (no transaction)", () => {

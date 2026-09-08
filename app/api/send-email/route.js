@@ -1,4 +1,3 @@
-require("dotenv").config();
 import nodemailer from "nodemailer";
 import { reviews } from "@/constants";
 import { getAdminSession } from "@/lib/authorize";

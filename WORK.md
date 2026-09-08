@@ -1,8 +1,8 @@
 # GDG Recruitment Portal — Work Report
 
 **Baseline commit:** `3013c55` (Initial commit)
-**Final commit:** `0af5630`
-**Total change:** 54 files touched, ~23,100 lines added, ~1,800 removed (verified via `git diff 3013c55 HEAD --stat`)
+**Final commit:** `6a91c93`
+**Total change:** 84 files touched, ~23,400 lines added, ~4,300 removed (verified via `git diff 3013c55 HEAD --stat`)
 
 This document explains, in plain terms, what was wrong with the original project and what was actually done about it — verified against the real Git history, not against plans that were written but never merged.
 
@@ -81,7 +81,7 @@ The admin experience intentionally looks and feels calmer and denser than the ap
 
 ## 6. Motion
 
-Animation uses the two libraries already in the project (Framer Motion and GSAP) — nothing new was added. Most transitions (button presses, card hovers, section changes in the form) are short CSS or Framer Motion transitions. GSAP is used only for the one animation complex enough to need it: the multi-step "ticket stamp" sequence on successful submission. Every animation respects `prefers-reduced-motion` — this is checked explicitly in `app/globals.css`, which defines a reduced-motion override block that turns transform-based animations into instant state changes.
+Animation uses Framer Motion and CSS transitions — nothing new was added. Most transitions (button presses, card hovers, section changes in the form) are short CSS or Framer Motion transitions. Every animation respects `prefers-reduced-motion` — this is checked explicitly in `app/globals.css`, which defines a reduced-motion override block that turns transform-based animations into instant state changes.
 
 ---
 
@@ -108,9 +108,6 @@ Animation uses the two libraries already in the project (Framer Motion and GSAP)
 - **`npm install`** — runs clean, no errors (this specifically re-confirms the dependency-version fix in Section 3 holds).
 - **`node --test tests/security-and-workflow.test.mjs`** — **17/17 pass.** This suite checks the security fixes, the transaction logic, and several of the cleanup items by reading the actual source files and by simulating the submission logic against a mock database.
 - **`npm run build`** — could not be completed in this environment because it needs to fetch fonts from Google Fonts and this sandbox has no network access to that domain. This is an environment limitation, not a code error — worth running once in a normal environment with internet access before treating the build as verified.
-- **`npm run lint`** — ESLint isn't configured yet in this project (running it prompts for first-time setup); it was not run.
+- **`npm run lint`** — **✔ No ESLint warnings or errors.** ESLint is configured with `next/core-web-vitals` and passes cleanly.
 
 No performance numbers are claimed anywhere in this report — none were benchmarked. The performance-related claims above (fewer wasted renders, deleted CPU-burning loops) are architectural facts, verified by reading the code, not measured.
-
----
-
