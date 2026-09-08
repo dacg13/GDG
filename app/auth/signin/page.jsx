@@ -93,6 +93,42 @@ export default function SignInPage() {
     }
   };
 
+  const handleQuickTestSignIn = async () => {
+    setIsSubmitting(true);
+    setErrorMessage("");
+    const testEmail = "testingkeliye@example.com";
+    const testName = "testingkeliye";
+
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem(
+          "dev_test_session",
+          JSON.stringify({
+            user: {
+              id: "test-user-testingkeliye",
+              name: testName,
+              email: testEmail,
+              role: "user",
+            },
+            session: {
+              id: "dev-session-test-01",
+              userId: "test-user-testingkeliye",
+              expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            },
+          })
+        );
+        window.dispatchEvent(new Event("dev_auth_change"));
+      }
+
+      router.push("/");
+    } catch (err) {
+      console.error("Test check-in error:", err);
+      setErrorMessage("Could not sign in with testingkeliye test pass.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (isPending) {
     return (
       <div className="min-h-screen flex flex-col bg-[var(--color-bg)]">
@@ -170,6 +206,27 @@ export default function SignInPage() {
                 <span className="leading-relaxed">{errorMessage}</span>
               </div>
             )}
+
+            {/* Quick Test Sign-In Option */}
+            <div className="mb-4 p-3 rounded-[var(--radius-sharp)] border border-[var(--color-accent)]/40 bg-[var(--color-accent)]/5">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--color-accent)] font-semibold">
+                  DEVELOPMENT / TEST ACCESS
+                </span>
+                <span className="font-mono text-[10px] text-[var(--color-ink-muted)]">
+                  PASS: testingkeliye
+                </span>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleQuickTestSignIn}
+                isLoading={isSubmitting}
+                className="w-full gap-2 border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white font-mono text-xs uppercase tracking-wider font-semibold transition-all"
+              >
+                <span>⚡ Quick Check-In: testingkeliye</span>
+              </Button>
+            </div>
 
             {/* Google OAuth Action (Dominant per designing.md Section 6) */}
             <div className="mb-6">
