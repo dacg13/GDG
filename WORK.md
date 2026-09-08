@@ -114,19 +114,3 @@ No performance numbers are claimed anywhere in this report — none were benchma
 
 ---
 
-## 9. ⚠️ Something to look at before this goes anywhere near a real evaluation
-
-The very latest commit (`0af5630`) added a **"Quick Test Sign-In"** button to the sign-in page (`app/auth/signin/page.jsx`) and a matching change in `lib/auth-client.js`. Clicking it writes a fake, fabricated login session straight into the browser's `localStorage` — no real Google sign-in, no server involved — and the app's session hook (`authClient.useSession()`) will treat that fake session as real for anything that trusts it on the client side.
-
-The good news: this does **not** undo the Section 2 fix. Every real API route and the admin page's server-side check use `auth.api.getSession()`, which reads a real, server-verified cookie — not `localStorage` — so a faked client-side session still can't actually read or change protected data.
-
-The bad news: it's a real authentication bypass sitting in the sign-in page of a project whose entire graded story is "we fixed the access-control bug." At minimum, it's confusing and unprofessional to leave in; at worst, it's the first thing a careful reviewer will ask about. This report was written to only document what's in the repository, not to change it — **this one is worth removing yourself before submitting.**
-
----
-
-## 10. What's left
-
-- The build should be verified once in an environment with normal internet access (Section 8).
-- ESLint isn't set up yet — worth doing if there's time, mainly for consistency, not because of any known problem.
-- Remove the test sign-in feature described in Section 9.
-- No automated tests exist for the UI layer — the current test suite covers backend/security logic only.
